@@ -1,52 +1,99 @@
 import random
 
+
 def print_board(board):
-    for row in board:
-        print(" | ".join(row))
-        print("---------")
+    print("\nCurrent Board:")
+    print("  0 1 2")
+    for i, row in enumerate(board):
+        print(f"{i} {'|'.join(row)}")
+        if i < 2:
+            print("  -----")
+
 
 def check_winner(board, player):
-    win_positions = [
-        [[0, 0], [0, 1], [0, 2]],
-        [[1, 0], [1, 1], [1, 2]],
-        [[2, 0], [2, 1], [2, 2]],
-        [[0, 0], [1, 0], [2, 0]],
-        [[0, 1], [1, 1], [2, 1]],
-        [[0, 2], [1, 2], [2, 2]],
-        [[0, 0], [1, 1], [2, 2]],
-        [[0, 2], [1, 1], [2, 0]]
-    ]
-    for positions in win_positions:
-        if all(board[r][c] == player for r, c in positions):
+    # Check rows, columns, diagonals
+    for i in range(3):
+        if all(cell == player for cell in board[i]) or all(board[j][i] == player for j in range(3)):
             return True
-    return False
+    return (board[0][0] == board[1][1] == board[2][2] == player or
+            board[0][2] == board[1][1] == board[2][0] == player)
+
+
+def get_empty_cells(board):
+    return [(i, j) for i in range(3) for j in range(3) if board[i][j] == ' ']
+
+
+def make_ai_move(board):
+    # Win if possible
+    for (i, j) in get_empty_cells(board):
+        board[i][j] = 'O'
+        if check_winner(board, 'O'):
+            return
+        board[i][j] = ' '
+
+    # Block player
+    for (i, j) in get_empty_cells(board):
+        board[i][j] = 'X'
+        if check_winner(board, 'X'):
+            board[i][j] = 'O'
+            return
+        board[i][j] = ' '
+
+    # Take center
+    if board[1][1] == ' ':
+        board[1][1] = 'O'
+        return
+
+    # Random move
+    i, j = random.choice(get_empty_cells(board))
+    board[i][j] = 'O'
+
+
+def get_player_move(board):
+    while True:
+        try:
+            row = int(input("Enter row (0-2): "))
+            col = int(input("Enter column (0-2): "))
+            if 0 <= row < 3 and 0 <= col < 3:
+                if board[row][col] == ' ':
+                    board[row][col] = 'X'
+                    return
+                else:
+                    print("Cell is already taken. Choose another.")
+            else:
+                print("Coordinates out of range. Try again.")
+        except ValueError:
+            print("Invalid input. Enter numbers only.")
+
 
 def play_tic_tac_toe():
-    board = [[" " for _ in range(3)] for _ in range(3)]
-    players = ['X', 'O']
-    turn = 0
+    board = [[' ' for _ in range(3)] for _ in range(3)]
+    print("Welcome to Tic-Tac-Toe!")
+    print("You are X, AI is O.")
+    print_board(board)
 
-    while True:
+    for _ in range(9):
+        get_player_move(board)
         print_board(board)
-        player = players[turn % 2]
-        print(f"\nPlayer {player}'s turn.")
-        row = int(input("Enter row (0-2): "))
-        col = int(input("Enter column (0-2): "))
+        if check_winner(board, 'X'):
+            print("🎉 You win!")
+            return
 
-        if board[row][col] == " ":
-            board[row][col] = player
-            if check_winner(board, player):
-                print_board(board)
-                print(f"\nPlayer {player} wins!")
-                break
-            elif all(board[r][c] != " " for r in range(3) for c in range(3)):
-                print_board(board)
-                print("\nIt's a draw!")
-                break
-            turn += 1
-        else:
-            print("\nInvalid move. Try again.")
+        if not get_empty_cells(board):
+            break
 
-# Example usage:
-print("\nLet's play Tic-Tac-Toe!")
+        print("AI is making a move...")
+        make_ai_move(board)
+        print_board(board)
+        if check_winner(board, 'O'):
+            print("💻 AI wins!")
+            return
+
+        if not get_empty_cells(board):
+            break
+
+    print("It's a draw!")
+
+
+# Run the game
 play_tic_tac_toe()
